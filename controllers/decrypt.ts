@@ -1,10 +1,10 @@
-import { query, Request, Response } from "express";
+import { Request, Response } from "express";
 import prisma from "../prisma/prisma";
 import cryptr from "../utils/cryptr";
 
 export default async function decrypt(req: Request, res: Response) {
   try {
-    const { code, password }: any = req.query;
+    const { code, password } = req.query;
     if (!code || !password) {
       return res.status(400).json({
         message: "Sharing code and password are required",
@@ -12,7 +12,7 @@ export default async function decrypt(req: Request, res: Response) {
     }
     const text = await prisma.text.findUnique({
       where: {
-        sharing_code: code,
+        sharing_code: code.toString(),
       },
     });
     if (!text) {
@@ -20,7 +20,7 @@ export default async function decrypt(req: Request, res: Response) {
         message: "Invalid decryption payload",
       });
     }
-    const isPasswordCorrect = password === cryptr.decrypt(text.password);
+    const isPasswordCorrect = password.toString() === cryptr.decrypt(text.password);
 
     if (!isPasswordCorrect) {
       return res.status(400).json({
@@ -28,9 +28,9 @@ export default async function decrypt(req: Request, res: Response) {
       });
     }
 
-    if (text.selfDestruct) {
+    if (text.self_destruct) {
       await prisma.text.delete({
-        where: { sharing_code: code },
+        where: { sharing_code: code.toString() },
       });
     }
     return res.status(200).json({
